@@ -43,7 +43,7 @@ def CalOneFeature(ls, target_name):
             is_contain = True
             rank = idx + 1
             ratio = rank / feature_length * 100
-            print("特征 {:s} 的重要性排序为 {:d} , 权重为 {:d} , 在 {:d} 个全部特征中的比例为 {:.2f}% .".format(target_name, rank, weight, feature_length, ratio))
+            print("特征 '{:s}' 的重要性排序为 {:d} , 权重为 {:d} , 在 {:d} 个全部特征中的比例为 {:.2f}% .".format(target_name, rank, weight, feature_length, ratio))
             break
     if not is_contain:
-        print(f"This feature: '{target_name}' is not in the feature list, which means its importance may be zero!")
+        print(f"输入的特征: '{target_name}' 不在特征重要度列表中, 这可能意味着该特征的重要度可能为零!（没有在建树中进行切分）")
