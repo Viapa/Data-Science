@@ -1,4 +1,4 @@
-from FeatureImportance import  CalTopkFeatures
+from FeatureImportance import *
 
 feature_list = [{"feature": "consume_age_olduser", "weight": 556},
                 {"feature": "home_poi_sales_olduser", "weight": 543},
@@ -298,6 +298,6 @@ feature_list = [{"feature": "consume_age_olduser", "weight": 556},
                 {"feature": "is_cate_240143", "weight": 1},
                 {"feature": "userid_cate2id_rtb_14d_ctcvr", "weight": 1},
                 {"feature": "is_cate_240500", "weight": 1}]
-topk_arr = CalTopkFeatures(feature_list, k=20)
 
-print(topk_arr)
+CalOneFeature(feature_list, "is_treat")
+CalOneFeature(feature_list, "current_hour")
