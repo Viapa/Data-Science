@@ -32,8 +32,8 @@ def CalBestCoef(table_name, alpha_range=(0.0, 1.0), step=0.05):
 def EvalByDecilesGraph(exp_df, ctrl_df, k=10):
     """
     用于计算Uplift-decile-charts，通过观察柱状图正负情况，获得样本处于正效果的比例
-    :param exp_df: 实验组的dataframe，包含user_id, uplift_score, label
-    :param ctrl_df: 对照组的dataframe，包含user_id, uplift_score, label
+    :param exp_df: 实验组的dataframe，包含user_id, score, label
+    :param ctrl_df: 对照组的dataframe，包含user_id, score, label
     :param k: 按等比例划分成的组数bins
     :return: 包含bins和mean(uplift)的dataframe表
     """
