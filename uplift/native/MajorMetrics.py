@@ -103,3 +103,89 @@ def plot_uplift_deciles_graph(deciles, k=10):
     plt.show()
 
     return None
+
+
+# 2. Cumulative gain
+def cumulative_gain(df, k=10):
+    """
+    计算累积增益图
+    1. 根据 uplift model 计算干预组T和对照组C中所有样本的 uplift 分数（uplift = P(Y|X,T=1) - P(Y|X,T=0)）
+    2. 对 uplift 分数进行由高到低排序
+    3. 将排序后的样本按等频（预估分）切分为10个组, 找到每一组的边界值b0, b1, ..., b10
+    4. 计算TopK个bin的平均累积因果效应 cumulative-gain, u(k,a) = ((Rtk) / (Ntk) - (Rck) / (Nck)) * (Ntk + Nck)
+    其中, u(k,a) 表示从第1个到第k个bin的平均累积真实因果效应, Rtk 表示第1到k个bin中T组里Y=1的样本数, Ntk 表示1到k个bin中T组的样本数,
+    Rck 表示第1到k个bin中C组里Y=1的样本数, Nck 表示1到k个bin中C组的样本数
+    6. 根据TopK个bin的 cumulative-gain 绘制出累积增益图
+    :param df: pd.DataFrame
+    :param k: Int
+    :return: List[Float]
+    """
+    df_ = df.copy()
+    # 对数据按uplift降序排序
+    df_.sort_values(by='uplift', ascending=False, inplace=True)
+    # 统计uplift的十分位数
+    quantiles = [df_.uplift.quantile(q=i / k) for i in range(k)]
+    quantiles = quantiles[::-1]
+    # 建立结果列表
+    gains = [0 for i in range(k)]
+    for i in range(k):
+        # 划分截止TopK个bin中的数据
+        bin_sample = df_.query(f'{quantiles[i]} <= uplift')
+        N_t_k = len(bin_sample.query('groupid == 1'))
+        N_c_k = len(bin_sample.query('groupid == 0'))
+        R_t_k = len(bin_sample.query('groupid == 1 and label == 1'))
+        R_c_k = len(bin_sample.query('groupid == 0 and label == 1'))
+        # 计算平均累积增益值
+        cumsum_gain = 0
+        if N_t_k != 0 and N_c_k != 0:
+            cumsum_gain = ((R_t_k) / (N_t_k) - (R_c_k) / (N_c_k)) * (N_t_k + N_c_k)
+        # 添加当前结果
+        gains[i] = cumsum_gain
+
+    return gains
+
+
+def plot_cumulative_gain(gains, k=10):
+    """
+    :param gains: List[Float]
+    :param k: Int
+    :return: None
+    """
+    # 设置绘图风格
+    config = {
+        'font.family': 'serif',
+        'font.size': 18,
+        'font.style': 'normal',
+        'font.weight': 'normal',
+        'font.serif': ['cmb10'],
+        'mathtext.fontset': 'cm',
+        'axes.unicode_minus': False
+    }
+    plt.rcParams.update(config)
+    plt.style.use('fivethirtyeight')
+
+    # 设置绘图参数
+    graph_size = (10, 6)
+    total_width = 0.8
+    legend_num = 2
+    bar_width = total_width / legend_num
+    # 开始绘图
+    plt.figure(figsize=graph_size)
+    plt.bar([i for i in range(k)], height=[x for x in gains], width=bar_width, color='steelblue')
+    plt.xticks([i for i in range(k)], [idx for idx in range(1, k+1)])
+    plt.xlabel('Percentile')
+    plt.ylabel('Mean(uplift)')
+    plt.title('Cumulative Gain')
+    plt.show()
+
+    return None
+
+
+# 测试入口
+if __name__ == "__main__":
+    # 1. uplift by deciles graph
+    res = uplift_by_deciles_graph(df)
+    plot_uplift_deciles_graph(res)
+    # 2. Cumulative gain
+    res = cumulative_gain(df)
+    plot_cumulative_gain(res)
