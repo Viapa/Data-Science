@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from tqdm.autonotebook import tqdm
 
 
-# 1. uplift by deciles graph
+# 1. Uplift by deciles graph
 def uplift_by_deciles_graph(df, k=10):
     """
     计算增量十分位数对比图。计算方式如下：
@@ -67,7 +67,6 @@ def uplift_by_deciles_graph(df, k=10):
 
 def plot_uplift_deciles_graph(deciles, k=10):
     """
-    绘制增量十分位数对比图
     :param deciles: List[[Float]]
     :param k: Int
     :return: None
@@ -94,7 +93,7 @@ def plot_uplift_deciles_graph(deciles, k=10):
     plt.figure(figsize=graph_size)
     plt.bar([i for i in range(k)], height=[x[0] for x in deciles], label='predicted', width=bar_width)
     plt.bar([i + bar_width for i in range(k)], height=[x[1] for x in deciles], label='actual', width=bar_width)
-    plt.xticks([i + bar_width / 2 * (legend_num -1 ) for i in range(k)],
+    plt.xticks([i + bar_width / 2 * (legend_num - 1) for i in range(k)],
                [str(idx * k) + '%' for idx in range(1, k+1)])
     plt.xlabel('Bins')
     plt.ylabel('Uplift')
@@ -138,7 +137,7 @@ def cumulative_gain(df, k=10):
         # 计算平均累积增益值
         cumsum_gain = 0
         if N_t_k != 0 and N_c_k != 0:
-            cumsum_gain = ((R_t_k) / (N_t_k) - (R_c_k) / (N_c_k)) * (N_t_k + N_c_k)
+            cumsum_gain = (R_t_k / N_t_k - R_c_k / N_c_k) * (N_t_k + N_c_k)
         # 添加当前结果
         gains[i] = cumsum_gain
 
@@ -181,11 +180,227 @@ def plot_cumulative_gain(gains, k=10):
     return None
 
 
+# 3. Uplift cruve & AUUC
+def uplift_cruve_with_auuc(df):
+    """
+    计算增量曲线和auuc值
+    1. 基于 cumulative_gain 的计算方式, 将数据集继续细分, 计算截止前x个样本的累积增益值
+    f(x) = ((Rtx) / (Ntx) - (Rcx) / (Ncx)) * (Ntx + Ncx)
+    2. 根据样本数和对应的f(x)值绘制uplift曲线, 横坐标为样本量, 纵坐标为累积增益
+    3. 根据uplift曲线和随机曲线的面积之差求得auuc值
+    :param df: pd.DataFrame
+    :return: Int, List[Float], float
+    """
+    df_ = df.copy()
+    # 对数据按uplift降序排序
+    df_.sort_values(by='uplift', ascending=False, inplace=True)
+    # 将数据转换为numpy格式
+    arr = df_[['label', 'groupid']].to_numpy()
+    # 计算总样本数
+    n = len(df_)
+    # 建立结果列表
+    gains = []
+    # 初始化变量
+    N_t_x, N_c_x = 0, 0
+    R_t_x, R_c_x = 0, 0
+    # 遍历每个元素
+    for row in arr:
+        label, group_id = row[0], row[1]
+        # 统计变量值
+        if group_id == 1:
+            N_t_x += 1
+            if label == 1:
+                R_t_x += 1
+        else:
+            N_c_x += 1
+            if label == 1:
+                R_c_x += 1
+        # 计算累积到当前元素的增益值
+        cumsum_gain = 0
+        if N_t_x != 0 and N_c_x != 0:
+            cumsum_gain = (R_t_x / N_t_x - R_c_x / N_c_x) * (N_t_x + N_c_x)
+        # 添加当前结果
+        gains.append(cumsum_gain)
+
+    # 计算uplift-cruve的面积
+    area_cruve = np.trapz(gains)
+    # 计算random-cruve的面积
+    area_random = n * gains[-1] / 2
+    # 计算AUUC值
+    auuc = round(area_cruve - area_random, 2)
+
+    return n, gains, auuc
+
+
+def plot_uplift_cruve(gains, n):
+    """
+    :param n: Int
+    :param gains: List[Float]
+    :return: None
+    """
+    # 设置绘图风格
+    config = {
+        'font.family': 'serif',
+        'font.size': 18,
+        'font.style': 'normal',
+        'font.weight': 'normal',
+        'font.serif': ['cmb10'],
+        'mathtext.fontset': 'cm',
+        'axes.unicode_minus': False
+    }
+    plt.rcParams.update(config)
+    plt.style.use('fivethirtyeight')
+
+    # 设置绘图参数
+    graph_size = (12, 8)
+    plt.figure(figsize=graph_size)
+    plt.plot([i for i in range(n)], gains, label='uplift-model', color='steelblue', linestyle='-')
+    plt.plot([0, n], [0, gains[-1]], label='random', color='orange', linestyle='--')
+    plt.xlabel('Samples')
+    plt.ylabel('Mean(uplift)')
+    plt.title('Uplift Cruve')
+    plt.legend(fontsize=16)
+    plt.show()
+
+    return None
+
+
+# 4. Qini cruve & Qini coefficient
+def qini_cruve_with_coef(df):
+    """
+    计算qini曲线和qini系数
+    1. 针对T组和C组的样本比例不平衡问题, 修改样本的累积增益计算公式为: g(x) = Rtx - Rcx * (Ntx / Ncx)
+    f(x) 与 g(x) 的关系为： f(x) = g(x) * (Ntx + Ncx) / Ntx
+    2. 根据样本数和对应的g(x)值绘制qini-uplift曲线, 横坐标为样本量, 纵坐标为修正的累积增益
+    3. 按4种人群排序, 满足 P(Y=1|T=1) > P(Y=0|T=1) 以及 P(Y=0|T=0) > P(Y=1|T=0)
+    4. 绘制完美曲线perfect-cruve
+    5. 根据perfect-cruve和qini-uplift曲线与随机曲线的面积之差求得qini-coef的值
+    :param df: pd.DataFrame
+    :return: Int, List[Float], List[Float], float
+    """
+    df_ = df.copy()
+    # 对数据按uplift降序排序
+    df_.sort_values(by='uplift', ascending=False, inplace=True)
+    # 将数据转换为numpy格式
+    arr = df_[['label', 'groupid']].to_numpy()
+    # 计算总样本数
+    n = len(df_)
+    # 建立结果列表
+    gains = []
+    # 初始化变量
+    N_t_x, N_c_x = 0, 0
+    R_t_x, R_c_x = 0, 0
+    # 遍历每个元素
+    for row in arr:
+        label, group_id = row[0], row[1]
+        # 统计变量值
+        if group_id == 1:
+            N_t_x += 1
+            if label == 1:
+                R_t_x += 1
+        else:
+            N_c_x += 1
+            if label == 1:
+                R_c_x += 1
+        # 计算累积到当前元素的增益值
+        cumsum_gain = 0
+        if N_c_x != 0:
+            cumsum_gain = R_t_x - R_c_x * (N_t_x / N_c_x)
+        # 添加当前结果
+        gains.append(cumsum_gain)
+
+    # 定义完美增量样本
+    df_treat = df_.query('groupid == 1').sort_values(by='label', ascending=False)
+    df_control = df_.query('groupid == 0').sort_values(by='label', ascending=True)
+    perfect_arr = df_treat.append(df_control)[['label', 'groupid']].to_numpy()
+    # 建立完美结果列表
+    perfect_gains = []
+    # 初始化变量
+    N_t_x, N_c_x = 0, 0
+    R_t_x, R_c_x = 0, 0
+    # 遍历每个元素
+    for row in perfect_arr:
+        label, group_id = row[0], row[1]
+        # 统计变量值
+        if group_id == 1:
+            N_t_x += 1
+            if label == 1:
+                R_t_x += 1
+        else:
+            N_c_x += 1
+            if label == 1:
+                R_c_x += 1
+        # 计算累积到当前元素的增益值
+        if N_c_x != 0:
+            cumsum_gain = R_t_x - R_c_x * (N_t_x / N_c_x)
+        else:
+            cumsum_gain = R_t_x
+        # 添加当前结果
+        perfect_gains.append(cumsum_gain)
+
+    # 计算qini-cruve的面积
+    area_cruve = np.trapz(gains)
+    # 计算perfect-cruve的面积
+    area_perfect = np.trapz(perfect_gains)
+    # 计算random-cruve的面积
+    area_random = n * gains[-1] / 2
+    # 计算qini-coefficient值
+    qini_coef = round((area_cruve - area_random) / (area_perfect - area_random), 4)
+
+    return n, gains, perfect_gains, qini_coef
+
+
+def plot_qini_cruve(gains, perfect_gains, n):
+    """
+    :param gains: List[Float]
+    :param perfect_gains: List[Float]
+    :param n: Int
+    :return: None
+    """
+    # 设置绘图风格
+    config = {
+        'font.family': 'serif',
+        'font.size': 18,
+        'font.style': 'normal',
+        'font.weight': 'normal',
+        'font.serif': ['cmb10'],
+        'mathtext.fontset': 'cm',
+        'axes.unicode_minus': False
+    }
+    plt.rcParams.update(config)
+    plt.style.use('fivethirtyeight')
+
+    # 设置绘图参数
+    graph_size = (12, 8)
+    plt.figure(figsize=graph_size)
+    plt.plot([i for i in range(n)], perfect_gains, label='perfect', color='limegreen', linestyle='-')
+    plt.plot([i for i in range(n)], gains, label='uplift-model', color='steelblue', linestyle='-')
+    plt.plot([0, n], [0, gains[-1]], label='random', color='orange', linestyle='--')
+    plt.xlabel('Samples')
+    plt.ylabel('Mean(uplift)')
+    plt.title('Qini Cruve')
+    plt.legend(fontsize=16)
+    plt.show()
+
+    return None
+
+
 # 测试入口
-if __name__ == "__main__":
-    # 1. uplift by deciles graph
+def main():
+    df = pd.read_csv('xxxxx.csv')
+    # 1. Uplift by deciles graph
     res = uplift_by_deciles_graph(df)
     plot_uplift_deciles_graph(res)
     # 2. Cumulative gain
     res = cumulative_gain(df)
     plot_cumulative_gain(res)
+    # 3. Uplift cruve & AUUC
+    n, res, auuc = uplift_cruve_with_auuc(df)
+    plot_uplift_cruve(res, n)
+    # 4. Qini cruve & Qini coefficient
+    n, gains, perfect_gains, qini_coef = qini_cruve_with_coef(df)
+    plot_qini_cruve(gains, perfect_gains, n)
+
+
+if __name__ == "__main__":
+    main()
