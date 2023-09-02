@@ -92,6 +92,19 @@ def create_time_series_data(df, target_city):
     return time_data
 
 
+def create_sequential_data(array, lookback):
+    """
+    创建用于LSTM等模型的序列格式数据
+    """
+    n_rows = len(array)
+    X, Y = [], []
+    for i in range(lookback, n_rows):
+        X.append(array[i - lookback: i, :])
+        Y.append((array[i, 0]))
+
+    return np.array(X), np.array(Y)
+
+
 def datekey_to_date(datekey_str):
     """
     将String类型, 格式为'%Y%m%d'的日期变量转换为'%Y-%m-%d'
@@ -100,6 +113,65 @@ def datekey_to_date(datekey_str):
     date_str = date.strftime('%Y-%m-%d')
 
     return date_str
+
+
+def rmse(y_true, y_pred):
+    """
+    计算真实样本和预估样本之间的RMSE指标
+    """
+    mse = mean_squared_error(y_true, y_pred)
+
+    return np.sqrt(mse)
+
+
+def mape(y_true, y_pred):
+    """
+    计算真实样本和预估样本之间的MAPE指标
+    """
+    ape = np.abs((y_true - y_pred) / y_true)
+
+    return np.mean(ape) * 100
+
+
+def r2(y_true, y_pred):
+    """
+    计算真实样本和预估样本之间的R2-Score指标
+    """
+    return r2_score(y_true, y_pred)
+
+
+def saves_model(model, model_name, model_type='ml'):
+    """
+    保存ML或NN格式的模型文件
+    """
+    if model_type == 'ml':
+        with open(model_name + '.pkl', 'wb') as f:
+            pickle.dump(model, f)
+    elif model_type == 'nn':
+        model.save(model_name + '.h5')
+    else:
+        raise ValueError('Unsupported model file format!')
+
+    print('Model has been saved.')
+
+    return None
+
+
+def loads_model(model_file, model_type='ml'):
+    """
+    加载ML或NN格式的模型文件
+    """
+    if model_type == 'ml':
+        with open(model_file + '.pkl', 'rb') as f:
+            model = pickle.load(f)
+    elif model_type == 'nn':
+        model = load_model(model_file + '.h5')
+    else:
+        raise ValueError('Unsupported model file format!')
+
+    print('Model has been loaded.')
+
+    return model
 
 
 def holiday_info():
@@ -115,6 +187,43 @@ def holiday_info():
     spring_festival = pd.DataFrame({
             'holiday': 'spring_festival',
             'ds': pd.to_datetime(['2021-02-11', '2022-01-31', '2023-01-22']),
-            'lower_window': -1,
+            'lower_window': -2,
             'upper_window': 5
     })
+    tomb_sweep = pd.DataFrame({
+            'holiday': 'tomb_sweep',
+            'ds': pd.to_datetime(['2021-04-03', '2022-04-05', '2023-04-05']),
+            'lower_window': -1,
+            'upper_window': 1
+    })
+    labor_day = pd.DataFrame({
+            'holiday': 'labor_day',
+            'ds': pd.to_datetime(['2021-05-01', '2022-05-01', '2023-05-01']),
+            'lower_window': -1,
+            'upper_window': 3
+    })
+    dragon_boat = pd.DataFrame({
+            'holiday': 'dragon_boat',
+            'ds': pd.to_datetime(['2021-06-12', '2022-06-03', '2023-06-22']),
+            'lower_window': -1,
+            'upper_window': 1
+    })
+    mid_autumn = pd.DataFrame({
+            'holiday': 'mid_autumn',
+            'ds': pd.to_datetime(['2021-09-19', '2022-09-10', '2023-09-29']),
+            'lower_window': -1,
+            'upper_window': 1
+    })
+    national_day = pd.DataFrame({
+            'holiday': 'national_day',
+            'ds': pd.to_datetime(['2021-10-01', '2022-10-01', '2023-10-01']),
+            'lower_window': -2,
+            'upper_window': 5
+    })
+
+    df_holiday = pd.concat((
+        new_year, spring_festival, tomb_sweep,
+        labor_day, dragon_boat, mid_autumn, national_day
+    ))
+
+    return  df_holiday
