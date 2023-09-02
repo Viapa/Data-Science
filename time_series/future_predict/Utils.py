@@ -65,12 +65,12 @@ def find_similar_city(df, target_city, k=10):
     return top_k
 
 
-def data_split(df, train_start, train_end, valid_start, valid_end, target_city):
+def data_split(df, train_begin, train_end, valid_begin, valid_end, target_city):
     """
     根据给定训练、验证的日期, 划分训练集和测试集样本
     """
-    df_train = df.query(f"df >= '{train_start}') & (dt <= '{train_end}')")
-    df_valid = df.query(f"df >= '{valid_start}') & (dt <= '{valid_end}')")
+    df_train = df.query(f"df >= '{train_begin}') & (dt <= '{train_end}')")
+    df_valid = df.query(f"df >= '{valid_begin}') & (dt <= '{valid_end}')")
     train_y = df_train[target_city].values
     valid_y = df_train[target_city].values
     drop_cols = ['dt', target_city]
@@ -235,9 +235,48 @@ def plot_series_cruve(series, city, tag):
     plt.figure(figsize=(12, 6), dpi=100)
     series.plot()
     plt.title(f"{tag} for {city}")
-    plt.xlabel('date')
+    plt.xlabel('Date')
     plt.ylabel(f'{tag}')
     plt.show()
 
     return None
 
+
+def plot_similar_series(df, target_city, topk_ls):
+    """
+    绘制相似topk个序列的对比曲线图
+    """
+    group = df.groupby('city')
+    target_group = group.get_group(target_city)
+    target_sales = target_group['sale_amt']
+    fig, ax = plt.subplots(figsize=(12, 6), dpi=100)
+    ax.plot(target_group.index, target_sales, color='blue', linestyle='--', label=target_city, linewidth=3)
+    for city in topk_ls:
+        city_group = group.get_group(city)
+        city_sales = city_group['sale_amt']
+        ax.plot(city_group.index, city_sales, linestyle='-', label=f'{city}', linewidth=2, alpha=0.9)
+    ax.set_title('TopK Similar Series of City')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Sales')
+    ax.legend(loc='best')
+
+    return None
+
+
+def plot_pred_error_cruve(begin_dt, end_dt, y_true, y_pred):
+    """
+    绘制真实与预估的误差曲线图
+    """
+    date_range = pd.date_range(begin_dt, end_dt)
+    date_index = date_range.strftime('%Y%m%d')
+    plt.figure(figsize=(12, 6), dpi=100)
+    plt.plot(date_index, y_true, label='Actual', linestyle='-', linewidth=3)
+    plt.plot(date_index, y_pred, label='Predicted', linestyle='--', linewidth=3)
+    plt.title('Predict Error Cruve')
+    plt.xlabel('Date')
+    plt.xticks(rotation=45, fontsize=15)
+    plt.ylabel('Sales')
+    plt.legend()
+    plt.show()
+
+    return None
