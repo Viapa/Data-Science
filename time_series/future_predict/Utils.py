@@ -13,7 +13,6 @@ import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from tqdm.autonotebook import tqdm
 from sklearn.metrics import r2_score, mean_squared_error
 from tensorflow.keras.models import load_model
 
@@ -226,4 +225,19 @@ def holiday_info():
         labor_day, dragon_boat, mid_autumn, national_day
     ))
 
-    return  df_holiday
+    return df_holiday
+
+
+def plot_series_cruve(series, city, tag):
+    """
+    绘制时序趋势曲线图
+    """
+    plt.figure(figsize=(12, 6), dpi=100)
+    series.plot()
+    plt.title(f"{tag} for {city}")
+    plt.xlabel('date')
+    plt.ylabel(f'{tag}')
+    plt.show()
+
+    return None
+
