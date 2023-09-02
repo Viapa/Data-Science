@@ -21,6 +21,11 @@ class CONFIG(object):
     PRED_END = "20230430"
     SIMILAR_K = 10
     SCALE_ORDER = 1e6
+    LOOKBACK = 7
+    # 与模型相关的常量
+    BATCH_SIZE = 16
+    EPOCH = 50
+    HIDDEN_SIZE = 32
     # 与绘图相关的常量
     PLOT_STYLE = "fivethirtyeight"
     PLOT_CONFIG = {
