@@ -15,6 +15,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, mean_squared_error
 from tensorflow.keras.models import load_model
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
+
+
+def build_saprk():
+    """
+    启动spark环境
+    """
+    spark = SparkSession.builder.enableHiveSupport().getOrCreate()
+    print("Spark application id: ", spark.sparkContext.applicationId)
+
+    return spark
 
 
 def read_hive_to_df(spark, table_name, cols=None, conditions=None):
