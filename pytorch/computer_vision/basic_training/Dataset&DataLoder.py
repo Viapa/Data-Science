@@ -95,9 +95,9 @@ if __name__ == "__main__":
     model = LogisticRegressionModel()
     # 定义损失和优化器
     criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1E-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1E-3)
     # 训练模型
-    epoch = 200
+    epoch = 100
     train(epoch, train_loader, model, criterion, optimizer)
     # 预测数据
     y_true, y_pred = predict(model, test_loader)
