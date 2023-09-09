@@ -72,5 +72,5 @@ if __name__ == "__main__":
     # 计算指标
     print("y_test: ", y_test)
     print("y_pred: ", y_pred)
-    r2 = eval(y_test.numpy(), y_pred.numpy())
-    print("RMSE: {:.4f}".format(r2))
+    rmse = eval(y_test.numpy(), y_pred.numpy())
+    print("RMSE: {:.4f}".format(rmse))
