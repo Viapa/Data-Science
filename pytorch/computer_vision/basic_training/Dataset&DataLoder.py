@@ -36,24 +36,24 @@ class LogisticRegressionModel(nn.Module):
         self.Linear1 = nn.Linear(8, 4)
         self.Linear2 = nn.Linear(4, 2)
         self.Linear3 = nn.Linear(2, 1)
-        self.Sigmoid = nn.Sigmoid()
-        self.Rule = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        self.relu = nn.ReLU()
 
     def forward(self, x):
-        x = self.Rule(self.Linear1(x))
-        x = self.Rule(self.Linear2(x))
-        out = self.Sigmoid(self.Linear3(x))
+        x = self.relu(self.Linear1(x))
+        x = self.relu(self.Linear2(x))
+        out = self.sigmoid(self.Linear3(x))
         return out
 
 
 # 定义训练函数
-def train(epochs, dataloader):
+def train(epochs, dataloader, model, loss_fn, optimizer):
     for step in range(epochs):
         step_loss = 0
         for data in dataloader:
             inputs, labels = data
             preds = model(inputs)
-            loss = criterion(preds, labels)
+            loss = loss_fn(preds, labels)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -72,15 +72,15 @@ def predict(model, dataloader):
         for data in dataloader:
             inputs, labels = data
             preds = model(inputs)
-            total_label.extend(labels.numpy())
-            total_pred.extend(preds.numpy())
+            total_label.extend(labels.numpy().flatten())
+            total_pred.extend(preds.numpy().flatten())
+
     return total_label, total_pred
 
 
 # 定义评估指标
 def eval(y_true, y_pred):
-    auc = roc_auc_score(y_true, y_pred)
-    return auc
+    return roc_auc_score(y_true, y_pred)
 
 
 if __name__ == "__main__":
@@ -94,11 +94,11 @@ if __name__ == "__main__":
     # 实例化模型
     model = LogisticRegressionModel()
     # 定义损失和优化器
-    criterion = nn.BCELoss(reduction='sum')
-    optimizer = torch.optim.SGD(model.parameters(), lr=1E-4)
+    criterion = nn.BCELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1E-4)
     # 训练模型
     epoch = 200
-    train(epoch, train_loader)
+    train(epoch, train_loader, model, criterion, optimizer)
     # 预测数据
     y_true, y_pred = predict(model, test_loader)
     # 计算指标
