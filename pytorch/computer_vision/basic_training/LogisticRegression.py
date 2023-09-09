@@ -48,8 +48,8 @@ def predict(x_test):
 
 # 定义评估指标
 def eval(y_true, y_pred):
-    acc = roc_auc_score(y_true, y_pred)
-    return acc
+    auc = roc_auc_score(y_true, y_pred)
+    return auc
 
 
 if __name__ == "__main__":
