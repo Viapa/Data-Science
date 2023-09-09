@@ -2,25 +2,27 @@
 """
 @project: Data-Science
 @Author: via
-@file: LinearRegression.py
-@date: 2023/9/9 10:16
-@target: 使用 Pytorch 实现一个简单的线性回归任务
+@file: LogisticRegression.py
+@date: 2023/9/9 11:52
+@target: 使用 Pytorch 实现一个简单的逻辑回归任务
 """
 
 import torch
 from torch import nn
 import numpy as np
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import roc_auc_score
 
 
-# 定义线性模型
-class LinearModel(nn.Module):
+# 定义逻辑回归模型
+class LogisticRegressionModel(nn.Module):
     def __init__(self):
-        super(LinearModel, self).__init__()
+        super(LogisticRegressionModel, self).__init__()
         self.Linear = nn.Linear(1, 1, bias=True)
+        self.Sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        out = self.Linear(x)
+        x = self.Linear(x)
+        out = self.Sigmoid(x)
         return out
 
 
@@ -36,9 +38,6 @@ def train(epochs, x_data, y_data):
         loss.backward()
         optimizer.step()
 
-    print("w = {:.6f}".format(model.Linear.weight.item()))
-    print("b = {:.6f}".format(model.Linear.bias.item()))
-
 
 # 定义预测函数
 def predict(x_test):
@@ -49,20 +48,20 @@ def predict(x_test):
 
 # 定义评估指标
 def eval(y_true, y_pred):
-    mse = mean_squared_error(y_true, y_pred)
-    return np.sqrt(mse)
+    acc = roc_auc_score(y_true, y_pred)
+    return acc
 
 
 if __name__ == "__main__":
     # 准备数据
     x_train = torch.Tensor([[10.0], [11.5], [15.8], [19.6], [25.8]])
-    y_train = torch.Tensor([[20.2], [23.3], [31.7], [39.9], [51.2]])
-    x_test = torch.Tensor([[5.9], [32.5]])
-    y_test = torch.Tensor([[11.8], [65.0]])
+    y_train = torch.Tensor([[0], [0], [1], [1], [1]])
+    x_test = torch.Tensor([[5.9], [14.8], [16.2], [32.5]])
+    y_test = torch.Tensor([[0], [0], [1], [1]])
     # 实例化模型
-    model = LinearModel()
+    model = LogisticRegressionModel()
     # 定义损失和优化器
-    criterion = nn.MSELoss(reduction='sum')
+    criterion = nn.BCELoss(reduction='sum')
     optimizer = torch.optim.SGD(model.parameters(), lr=1E-4)
     # 训练模型
     epoch = 1000
@@ -72,5 +71,5 @@ if __name__ == "__main__":
     # 计算指标
     print("y_test: ", y_test)
     print("y_pred: ", y_pred)
-    rmse = eval(y_test.numpy(), y_pred.numpy())
-    print("RMSE: {:.4f}".format(rmse))
+    auc = eval(y_test.numpy(), y_pred.numpy())
+    print("AUC: {:.4f}".format(auc))
