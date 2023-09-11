@@ -150,6 +150,7 @@ def eval(y_true, y_pred):
 if __name__ == "__main__":
     # 定义数据增强
     train_transform = transforms.Compose([
+        transforms.RandomCrop((128, 128)),
         transforms.Resize((96, 96)),
         transforms.RandomHorizontalFlip(p=0.3),
         transforms.RandomVerticalFlip(p=0.3),
