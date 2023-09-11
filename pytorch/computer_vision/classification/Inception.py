@@ -185,10 +185,10 @@ if __name__ == "__main__":
     # 训练模型
     model = model.to(device)
     epoch = 50
-    best_weights = train(epoch, train_loader, test_loader, model, criterion, optimizer)
+    best_weight = train(epoch, train_loader, test_loader, model, criterion, optimizer)
     # 预测数据
-    model.load_state_dict(best_weights)
+    model.load_state_dict(best_weight)
     y_true, y_pred = predict(model, test_loader)
     # 计算指标
     acc = eval(y_true, y_pred)
-    print("Accuracy: {:.4f}".format(acc))
+    print("Test accuracy: {:.4f}".format(acc))
