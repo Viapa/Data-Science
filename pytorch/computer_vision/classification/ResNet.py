@@ -35,12 +35,13 @@ def train(epochs, train_loader, valid_loader, model, loss_fn, optimizer):
         step_loss = 0.0
         step_correct = 0.0
         valid_correct = 0.0
+        model.train()
         for data in train_loader:
+            optimizer.zero_grad()
             images, labels = data
             images, labels = images.to(device), labels.to(device)
             logits = model(images)
             loss = loss_fn(logits, labels)
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             with torch.no_grad():
@@ -50,6 +51,7 @@ def train(epochs, train_loader, valid_loader, model, loss_fn, optimizer):
         mean_accuracy = step_correct / len(train_loader.dataset)
         print("Epoch: {:}, train_loss: {:.4f}, train_acc: {:.4f}".format(step, mean_loss, mean_accuracy))
         # 计算每个epoch在验证集的准确率, 保留最佳分数对应的模型权重
+        model.eval()
         with torch.no_grad():
             for data in valid_loader:
                 images, labels = data
@@ -117,8 +119,10 @@ if __name__ == "__main__":
     # 加载预训练模型
     weights_file = "C:/Users/86181/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth"
     model = load_model(weights_file)
-    # 修改FC层的输出维度
-    model.fc = nn.Linear(model.fc.in_features, len(idx_to_classes))
+    # 修改FC层的最终输出维度
+    model.fc = nn.Sequential(
+        nn.Linear(model.fc.in_features, len(idx_to_classes))
+    )
     # 释放卷积层最后部分和全连接层部分的训练参数
     for p in model.parameters():
         p.requires_grad = False
@@ -131,7 +135,7 @@ if __name__ == "__main__":
     print(model(img).shape)
     # 定义损失和优化器
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1E-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1E-4)
     # 训练模型
     model = model.to(device)
     epoch = 20
