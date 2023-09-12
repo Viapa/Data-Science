@@ -141,10 +141,10 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1E-3)
     # 定义学习率控制函数
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.6)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
     # 训练模型
     model = model.to(device)
-    epoch = 20
+    epoch = 30
     best_weight = train(epoch, train_loader, test_loader, model, criterion, optimizer, scheduler)
     # 预测数据
     model.load_state_dict(best_weight)
