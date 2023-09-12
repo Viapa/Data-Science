@@ -49,7 +49,7 @@ def train(epochs, train_loader, valid_loader, model, loss_fn, optimizer, schedul
                 step_correct += (logits.argmax(dim=1) == labels).float().sum().item()
         # 学习率更新并打印当前值
         scheduler.step()
-        print("Current learning rate:", optimizer.param_groups[0]['lr'])
+        print("Learning rate:", optimizer.param_groups[0]['lr'])
         # 计算训练集的平均loss和准确率
         mean_loss = step_loss / len(train_loader)
         mean_accuracy = step_correct / len(train_loader.dataset)
@@ -99,8 +99,8 @@ if __name__ == "__main__":
     train_transform = transforms.Compose([
         transforms.Resize((256, 256)),
         transforms.RandomCrop((224, 224)),
-        transforms.RandomHorizontalFlip(p=0.3),
-        transforms.RandomVerticalFlip(p=0.3),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.5),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1E-3)
     # 定义学习率控制函数
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.6)
     # 训练模型
     model = model.to(device)
     epoch = 20
