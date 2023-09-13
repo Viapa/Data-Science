@@ -103,10 +103,10 @@ def array2tensor(array):
 # 获取张量的具体数值
 def get_tensor(tensor):
     """
-    当tensor的维度等于1时, 可获取其值, 否则获取其列表形式
+    当tensor的维度小于1时, 可获取其值, 否则获取其列表形式
     """
     size = tensor.dim()
-    if size == 1:
+    if size < 1:
         x = tensor.item()
     else:
         x = tensor.tolist()
