@@ -2,8 +2,8 @@
 """
 @project: Data-Science
 @Author: via
-@file: LinearRegression.py
-@date: 2023/9/9 10:16
+@file: Tensor.py
+@date: 2023/9/13 16:05
 @target: 学会掌握 Pytorch 中的 Tensor 的相关基础用法
 """
 
