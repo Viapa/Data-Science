@@ -179,7 +179,39 @@ def einsum_formula():
     print(C2.shape)
     # ------高级用法------
     # 双线性变换
+    # 解释: 一种特殊映射关系, 输入两个向量x,y, 输出一个标量a；
+    # 对于所有的向量x和y以及标量a，有B(ax, y) = aB(x, y)和B(x, ay) = aB(x, y)。这意味着，如果我们将x或y乘以一个标量，那么B的输出也会乘以这个标量。这就是线性的定义。
+    # 对于所有的向量x, y和z，有B(x+y, z) = B(x, z) + B(y, z)和B(x, y+z) = B(x, y) + B(x, z)。这意味着，如果我们将x或y加上另一个向量，那么B的输出就等于将这两个向量分别输入B并将结果相加。这也是线性的定义。
+    # 在机器学习中，双线性变换通常用于模型的一部分，用于捕获输入特征之间的交互效应。例如，在推荐系统中，可以使用双线性变换来捕获用户和物品特征之间的交互效应（注意力机制）。
+    # 不考虑batch维度时, 双线性变换公式为: a = q @ W @ k.t + b
+    Q = torch.randn(8, 10)  # batch_size,query_features
+    K = torch.randn(8, 10)  # batch_size,key_features
+    W = torch.randn(5, 10, 10)  # out_features,query_features,key_features
+    b = torch.randn(5)  # out_features
+    A1 = torch.bilinear(Q, K, W, b)
+    print(A1.shape)
+    A2 = torch.einsum('bq,oqk,bk->bo',Q,W,K) + b
+    print(A2.shape)
 
+    return None
+
+
+# 广播机制应用
+def broadcast():
+    """
+    类似于numpy中的数组广播机制, 张量也可以自动化进行广播运算
+    """
+    # 隐式自动广播
+    a = torch.tensor([1, 2, 3])
+    b = torch.tensor([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
+    print(a.shape, b.shape)
+    print(b + a)
+    # 显式指定广播
+    a_broad, b_broad = torch.broadcast_tensors(a, b)
+    print(a_broad.shape, b_broad.shape)
+    print(a_broad + b_broad)
+
+    return None
 
 
 if __name__ == "__main__":
@@ -213,3 +245,5 @@ if __name__ == "__main__":
     print(val2)
     # 学习爱因斯坦求和转换公式应用
     einsum_formula()
+    # 学习广播机制
+    broadcast()
