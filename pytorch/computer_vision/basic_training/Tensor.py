@@ -4,7 +4,7 @@
 @Author: via
 @file: Tensor.py
 @date: 2023/9/13 16:05
-@target: 学会掌握 Pytorch 中的 Tensor 的相关基础用法
+@target: 学会掌握 Pytorch 中的 Tensor 的相关核心用法
 """
 
 import numpy as np
@@ -114,6 +114,74 @@ def get_tensor(tensor):
     return x
 
 
+# einsum函数的应用
+def einsum_formula():
+    """
+    爱因斯坦求和转换规则: C(i,j) = A(i,k)B(k,j)
+    1，用元素计算公式来表达张量运算。
+    2，只出现在元素计算公式箭头左边的指标叫做哑指标。
+    3，省略元素计算公式中对哑指标的求和符号。
+    使用einsum(expr, *tensors)函数, 可以输入任意张量运算表达来实现数学运算、矩阵运算和维度变换等功能
+    """
+    # ------基础用法------
+    # 矩阵乘法
+    A = torch.tensor([[1, 2], [3, 4.0]])
+    B = torch.tensor([[5, 6], [7, 8.0]])
+    C1 = A @ B
+    print(C1)
+    C2 = torch.einsum("ik,kj->ij", A, B)  # 表示将A矩阵(i*k)和B矩阵(k*j)变换为(i*j)形状
+    print(C2)
+    # 张量转置
+    A = torch.randn(3, 4, 5)
+    B1 = torch.permute(A, [0, 2, 1])
+    print(B1.shape)
+    B2 = torch.einsum("ijk->ikj", A)
+    print(B2.shape)
+    # 取对角线元素
+    A = torch.randn(5, 5)
+    B1 = torch.diagonal(A)
+    print(B1)
+    B2 = torch.einsum("ii->i", A)
+    print(B2)
+    # 降维求和
+    A = torch.randn(4, 5)
+    B1 = torch.sum(A, dim=1)
+    print(B1)
+    B2 = torch.einsum("ij->i", A)
+    print(B2)
+    # 哈达玛积(元素乘法)
+    A = torch.randn(5, 5)
+    B = torch.randn(5, 5)
+    C1 = A * B
+    print(C1)
+    C2 = torch.einsum("ij,ij->ij", A, B)
+    print(C2)
+    # 向量内积(点积)
+    A = torch.randn(10)
+    B = torch.randn(10)
+    C1 = torch.dot(A, B)
+    print(C1)
+    C2 = torch.einsum("i,i->", A, B)
+    print(C2)
+    # 向量外积(等价于A.T @ B)
+    A = torch.randn(10)
+    B = torch.randn(5)
+    C1 = torch.outer(A, B)
+    print(C1.shape)
+    C2 = torch.einsum("i,j->ij", A, B)
+    print(C2.shape)
+    # 张量缩并(广义的矩阵乘法)
+    A = torch.randn(3, 4, 5)
+    B = torch.randn(4, 3, 6)
+    C1 = torch.tensordot(A, B, dims=([0, 1], [1, 0]))
+    print(C1.shape)
+    C2 = torch.einsum("ijk,jih->kh", A, B)
+    print(C2.shape)
+    # ------高级用法------
+    # 双线性变换
+
+
+
 if __name__ == "__main__":
     # 学习张量的数据类型
     t1 = create_tensor(2, torch.long)
@@ -143,3 +211,5 @@ if __name__ == "__main__":
     print(val1)
     val2 = get_tensor(t6)
     print(val2)
+    # 学习爱因斯坦求和转换公式应用
+    einsum_formula()
