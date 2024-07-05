@@ -2,7 +2,7 @@
 import tensorflow as tf
 
 
-# 基本公式与定义
+# mish激活函数定义
 def mish(x):
     return x * tf.tanh(tf.math.softplus(x))
 
@@ -12,7 +12,7 @@ y = mish(x)
 print(x)
 print(y)
 
-# 在layer层中使用
+# layer层中使用
 tf.keras.utils.get_custom_objects().update({'mish': mish})
 
 inputs = x
